@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mental Health Journal — Frontend Only</title>
+  <meta name="description" content="Mental Health Journal and supportive Chatbot." />
+  <style>
+    /* --------- Reset & variables --------- */
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#f6fbff;
+      --card:#ffffff;
+      --accent1:#7c3aed; /* violet */
+      --accent2:#06b6d4; /* teal */
+      --muted:#6b7280;
+      --glass: rgba(255,255,255,0.6);
+      --radius:14px;
+      --shadow: 0 8px 30px rgba(2,6,23,0.08);
+      --maxw:1100px;
+      --ff-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    html,body{height:100%;font-family:var(--ff-sans);background:linear-gradient(180deg,var(--bg) 0%, #eaf7ff 100%);color:#0f1724}
+    a{color:inherit;text-decoration:none}
+
+    /* --------- Layout --------- */
+    .wrap{max-width:var(--maxw);margin:36px auto;padding:28px;display:grid;grid-template-columns:320px 1fr;gap:24px}
+    .sidebar{background:linear-gradient(180deg, rgba(124,58,237,0.06), rgba(6,182,212,0.04));border-radius:18px;padding:20px;box-shadow:var(--shadow)}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent1),var(--accent2));display:grid;place-items:center;color:white;font-weight:700;font-size:20px}
+    .brand h1{font-size:18px}
+    .brand p{font-size:12px;color:var(--muted)}
+
+    /* nav (anchor links) */
+    nav{margin-top:18px}
+    nav a{display:block;padding:10px 12px;margin-bottom:8px;border-radius:10px;color:var(--accent1);font-weight:600}
+    nav a:hover{background:rgba(124,58,237,0.06)}
+
+    /* tiny profile */
+    .profile{margin-top:18px;padding:12px;border-radius:12px;background:rgba(255,255,255,0.7);display:flex;gap:12px;align-items:center}
+    .avatar{width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,#fff,#f3f4f6);display:grid;place-items:center;font-weight:700}
+    .meta small{display:block;color:var(--muted)}
+
+    /* main content cards */
+    .main{min-height:520px}
+    .card{background:var(--card);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);margin-bottom:18px}
+
+    /* page sections controlled by :target (HTML-only routing) */
+    section{display:none}
+    section:target{display:block}
+    /* default: show home if none targeted */
+    :root > body:not(:target) section#home{display:block}
+
+    /* HERO / Home */
+    .hero{display:flex;gap:20px;align-items:center}
+    .hero-left{flex:1}
+    .headline{font-size:28px;line-height:1.06;margin-bottom:8px}
+    .quote{font-size:16px;color:var(--muted);margin-bottom:12px}
+    .hero-cta{display:flex;gap:10px}
+    .btn{padding:10px 14px;border-radius:12px;font-weight:700;cursor:pointer;border:none}
+    .btn-primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:white}
+    .btn-ghost{background:transparent;border:1px solid rgba(15,23,36,0.06)}
+
+    .hero-art{width:280px;height:200px;border-radius:14px;background:linear-gradient(135deg,#fff6ff,#f0fbff);display:grid;place-items:center;box-shadow:inset 0 -20px 50px rgba(6,182,212,0.06)}
+    .hero-art svg{width:80%;height:auto}
+
+    /* Journal page */
+    .journal-area{display:grid;grid-template-columns:1fr 320px;gap:18px}
+    .entry{min-height:320px;border-radius:12px;padding:16px;background:linear-gradient(180deg,#fff, #fbfdff);border:1px dashed rgba(6,182,212,0.08)}
+    .entry h3{margin-bottom:8px}
+    textarea{width:100%;min-height:260px;border-radius:10px;border:1px solid rgba(15,23,36,0.06);padding:12px;font-size:15px;resize:vertical}
+    .mood-pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .pill{padding:8px 10px;border-radius:999px;background:linear-gradient(90deg, rgba(124,58,237,0.08), rgba(6,182,212,0.06));font-weight:600}
+
+    /* journal sidebar tips */
+    .tips{background:linear-gradient(180deg,#fff,#fbfbff);padding:14px;border-radius:12px}
+    .tips h4{margin-bottom:8px}
+    .tip{font-size:14px;color:var(--muted);margin-bottom:8px}
+
+    /* Chatbot mockup */
+    .chat-window{display:flex;flex-direction:column;height:420px;border-radius:12px;border:1px solid rgba(15,23,36,0.04);overflow:hidden}
+    .chat-header{padding:12px;background:linear-gradient(90deg, rgba(124,58,237,0.06), rgba(6,182,212,0.04));display:flex;align-items:center;gap:12px}
+    .bot-dot{width:12px;height:12px;border-radius:50%;background:var(--accent2)}
+    .messages{flex:1;padding:12px;display:flex;flex-direction:column;gap:10px;overflow:auto;background:linear-gradient(180deg,#fbffff,#ffffff)}
+    .bubble{max-width:76%;padding:10px 12px;border-radius:12px;line-height:1.3}
+    .bubble.bot{align-self:flex-start;background:linear-gradient(180deg,#fff,#f3f5ff);border:1px solid rgba(124,58,237,0.06)}
+    .bubble.user{align-self:flex-end;background:linear-gradient(180deg,#e6fffa,#f0fff4);border:1px solid rgba(6,182,212,0.06)}
+    .chat-input{display:flex;gap:8px;padding:12px;border-top:1px solid rgba(15,23,36,0.03)}
+    .chat-input input{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(15,23,36,0.06)}
+    .note{font-size:12px;color:var(--muted);margin-top:8px}
+
+    /* Conclusion */
+    .conclusion{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:center}
+    .conclusion .card{background:linear-gradient(180deg,#fffefb,#f7fcff)}
+
+    /* footer */
+    footer{margin-top:10px;text-align:center;color:var(--muted);font-size:13px}
+
+    /* Responsive */
+    @media (max-width:900px){.wrap{grid-template-columns:1fr;padding:18px}.journal-area,.conclusion{grid-template-columns:1fr}.hero{flex-direction:column}.hero-art{width:100%;height:180px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">MH</div>
+        <div>
+          <h1>Mental Health Journal</h1>
+          <p>Colorful, calm, & frontend-only</p>
+        </div>
+      </div>
+
+      <nav>
+        <a href="#home">Home</a>
+        <a href="#journal">Journal</a>
+        <a href="#chatbot">Chatbot (UI only)</a>
+        <a href="#conclusion">Conclusion</a>
+      </nav>
+
+      <div class="profile" style="margin-top:14px">
+        <div class="avatar">P</div>
+        <div class="meta">
+          <strong>Welcome</strong>
+          <small>Take 10 minutes for yourself today</small>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;font-size:13px;color:var(--muted)">
+        <p><strong>Tip:</strong> This app is frontend-only — to keep entries private, copy your text to a file on your computer.</p>
+      </div>
+    </aside>
+
+    <main class="main">
+
+      <!-- Home -->
+      <section id="home" class="card">
+        <div class="hero">
+          <div class="hero-left">
+            <div class="headline">A calm place to write, reflect, and breathe.</div>
+            <div class="quote">"Small, steady steps forward are still progress."</div>
+            <div class="hero-cta">
+              <a href="#journal" class="btn btn-primary">Write Journal</a>
+              <a href="#chatbot" class="btn btn-ghost">Open Chat UI</a>
+            </div>
+
+            <div style="margin-top:18px;color:var(--muted)">
+              <p>Use the journal to collect thoughts — the chatbot UI is a non-interactive supportive layout .</p>
+            </div>
+          </div>
+
+          <div class="hero-art">
+            <!-- simple inline SVG art -->
+            <svg viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <defs>
+                <linearGradient id="g1" x1="0" x2="1">
+                  <stop offset="0" stop-color="#7c3aed" stop-opacity="0.9"/>
+                  <stop offset="1" stop-color="#06b6d4" stop-opacity="0.9"/>
+                </linearGradient>
+              </defs>
+              <rect x="6" y="10" width="188" height="116" rx="14" fill="url(#g1)" opacity="0.12"/>
+              <circle cx="58" cy="60" r="22" fill="#fff" opacity="0.9"/>
+              <circle cx="132" cy="44" r="14" fill="#fff" opacity="0.9"/>
+              <rect x="24" y="86" width="152" height="18" rx="6" fill="#fff" opacity="0.9"/>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- Journal -->
+      <section id="journal" class="card">
+        <h2 style="margin-bottom:12px">Journal — write your thoughts</h2>
+        <div class="journal-area">
+          <div>
+            <div class="entry">
+              <h3>Today's entry</h3>
+              <small class="note">Write freely — this textarea doesn't send data anywhere. To save, copy & paste into a local file.</small>
+              <textarea placeholder="How are you feeling right now? What's on your mind? Try writing for 5–10 minutes."></textarea>
+
+              <div style="display:flex;gap:10px;margin-top:10px;align-items:center">
+                <div class="mood-pills">
+                  <div class="pill">Calm</div>
+                  <div class="pill">Anxious</div>
+                  <div class="pill">Grateful</div>
+                  <div class="pill">Tired</div>
+                </div>
+                <div style="margin-left:auto">
+                  <button class="btn btn-primary">(Non-functional) Save</button>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top:12px" class="card">
+              <h4>Prompts to get started</h4>
+              <ul style="margin-top:8px;color:var(--muted);line-height:1.6">
+                <li>What made me smile today?</li>
+                <li>What feels heavy right now?</li>
+                <li>One small thing I can do today to care for myself</li>
+              </ul>
+            </div>
+          </div>
+
+          <aside class="tips">
+            <h4>Quick self-care tips</h4>
+            <p class="tip">Breathe for 4-4-4: inhale 4s, hold 4s, exhale 4s.</p>
+            <p class="tip">If overwhelmed, try listing 3 small wins from today.</p>
+            <p class="tip">Keep entries private by saving them on your device.</p>
+          </aside>
+        </div>
+      </section>
+
+      <!-- Chatbot UI (non-interactive) -->
+      <section id="chatbot" class="card">
+        <h2 style="margin-bottom:12px">Supportive Chat — UI only</h2>
+        <p class="note">This is a non-interactive mockup of a supportive chatbot.</p>
+        <div style="display:grid;grid-template-columns:1fr 360px;gap:18px;margin-top:12px;align-items:start">
+          <div>
+            <div class="chat-window">
+              <div class="chat-header">
+                <div class="bot-dot"></div>
+                <div>
+                  <strong>SupportBot</strong>
+                  <div style="font-size:12px;color:var(--muted)">I'm here to listen — type below to practice what you'd say.</div>
+                </div>
+              </div>
+
+              <div class="messages">
+                <div class="bubble bot">Hi — I'm a calm space to help you reflect. What's on your mind?</div>
+                <div class="bubble user">I feel a bit overwhelmed with work and can't focus.</div>
+                <div class="bubble bot">That sounds tough. Can you tell me one small thing you could do right now to make the day easier?</div>
+                <div class="bubble user">Take a short walk and drink some water.</div>
+                <div class="bubble bot">That's a great plan. Small actions add up. Remember to be kind to yourself.</div>
+              </div>
+
+              <div style="padding:10px" class="chat-input">
+                <input placeholder="Type a message (not sent) — try: 'I need a breather'" />
+                <button class="btn btn-primary">Send</button>
+              </div>
+            </div>
+
+            <div style="margin-top:12px" class="card">
+              <h4>Useful prompts</h4>
+              <ul style="color:var(--muted);line-height:1.6">
+                <li>I'm feeling overwhelmed — help me prioritize.</li>
+                <li>I can't stop worrying about X — what can I try?</li>
+                <li>Suggest a 5-minute grounding exercise.</li>
+              </ul>
+            </div>
+          </div>
+
+          <aside class="tips">
+            <h4>When to use the chat UI</h4>
+            <p class="tip">Practice saying what you feel before a difficult conversation.</p>
+            <p class="tip">Use the UI to draft supportive messages you'd send to yourself or a friend.</p>
+            <p class="tip">If you are in crisis, contact local emergency services or a crisis line — this mockup is not a replacement for real support.</p>
+          </aside>
+        </div>
+      </section>
+
+      <!-- Conclusion -->
+      <section id="conclusion" class="card">
+        <h2 style="margin-bottom:12px">You're doing the work</h2>
+        <div class="conclusion">
+          <div>
+            <p style="color:var(--muted);margin-bottom:12px">Thank you for spending a few minutes here. Small, consistent journaling and practicing supportive self-talk can improve mood and clarity over time.</p>
+            <div class="card">
+              <h4>Daily checklist</h4>
+              <ul style="color:var(--muted);line-height:1.6">
+                <li>Write at least 1 thought.</li>
+                <li>Do one small self-care activity.</li>
+                <li>Save your entry locally for privacy.</li>
+              </ul>
+            </div>
+          </div>
+
+          <aside style="padding:12px;border-radius:12px;background:linear-gradient(180deg,#fff,#f8fbff)">
+            <h4 style="margin-bottom:8px">Motivating quote</h4>
+            <p style="font-weight:700;color:var(--accent1);font-size:16px">"You don't have to be perfect to be proud of yourself."</p>
+            <footer style="margin-top:14px;font-size:12px;color:var(--muted)">Open this file in your browser (double-click) or in VS Code Live Server.</footer>
+          </aside>
+        </div>
+      </section>
+
+      <footer>Made with care • Simple </footer>
+    </main>
+  </div>
+</body>
+</html>
